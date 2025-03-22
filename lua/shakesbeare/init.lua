@@ -10,11 +10,11 @@ vim.filetype.add({ extension = { p8 = "pico8" } })
 -- 	end,
 -- })
 
-vim.api.nvim_create_autocmd({ "BufRead" }, {
+vim.api.nvim_create_autocmd({ "UiEnter" }, {
 	group = vim.api.nvim_create_augroup("toggle_no_nock_pain", {}),
 	pattern = "*",
 	callback = function() 
-		vim.cmd[[NoNeckPain]]
+		require('no-neck-pain').enable()
 	end
 })
 
