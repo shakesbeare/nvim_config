@@ -10,6 +10,14 @@ vim.filetype.add({ extension = { p8 = "pico8" } })
 -- 	end,
 -- })
 
+vim.api.nvim_create_autocmd({ "BufRead" }, {
+	group = vim.api.nvim_create_augroup("toggle_no_nock_pain", {}),
+	pattern = "*",
+	callback = function() 
+		vim.cmd[[NoNeckPain]]
+	end
+})
+
 vim.api.nvim_create_autocmd({ "WinEnter", "WinResized" }, {
 	group = vim.api.nvim_create_augroup("set_tabline_offset", {}),
 	pattern = "*",
