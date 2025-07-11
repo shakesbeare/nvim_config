@@ -55,6 +55,29 @@ local function check_build_file()
 	end
 	return true
 end
+
+function run_command(buildfile_table, build)
+	local fidget = require('fidget')
+	local build = build or false
+	local cmd = {}
+	if build then
+		for w in buildfile_table.build:gmatch("%S+") do table.insert(cmd, w) end
+	else
+		for w in buildfile_table.run:gmatch("%S+") do table.insert(cmd, w) end
+	end
+	local buffer = {}
+	pcall(function()
+		vim.system(cmd, { text = true, stdout = function(err, data) 
+			if err then
+				fidget.notify(err)
+			elseif data then
+				fidget.notify(data)
+			end
+		end }, function(obj)
+				fidget.notify("Build completed")
+		end)
+	end)
+end
 -- Run build configuration in .buildfile in the workspace root
 -- .buildfile is a lua file which returns a table in this format
 -- return {
@@ -62,25 +85,11 @@ end
 --     run = "echo Hello, Run!",
 -- }
 vim.keymap.set("n", "<C-b>", function()
-	local fidget = require('fidget')
 	if not check_build_file() then 
 		return
 	end
-
 	local result = dofile('.buildfile')
-	local cmd = {}
-	for w in result.build:gmatch("%S+") do table.insert(cmd, w) end
-
-	local buffer = {}
-	vim.system(cmd, { text = true, stdout = function(err, data) 
-		if err then
-			fidget.notify(err)
-		elseif data then
-			fidget.notify(data)
-		end
-	end }, function(obj)
-			fidget.notify("Build completed")
-	end)
+	run_command(result, true)
 end, { silent = true, noremap = true, desc = "Find and execute a build configuration in the .buildfile in the workspace root"})
 
 -- Run run configuration in .buildfile in the workspace root
@@ -90,24 +99,12 @@ end, { silent = true, noremap = true, desc = "Find and execute a build configura
 --     run = "echo Hello, Run!",
 -- }
 vim.keymap.set("n", "<F5>", function()
-	local fidget = require('fidget')
 	if not check_build_file() then 
 		return
 	end
-
 	local result = dofile('.buildfile')
 	local cmd = {}
-	for w in result.run:gmatch("%S+") do table.insert(cmd, w) end
-
-	local buffer = {}
-	vim.system(cmd, { text = true, stdout = function(err, data) 
-		if err then
-			fidget.notify(err)
-		elseif data then
-			fidget.notify(data)
-		end
-	end }, function(obj)
-	end)
+	run_command(result, false)
 end, { silent = true, noremap = true, desc = "Find and execute a run configuration .buildfile in the workspace root"})
 
 -- Become a master of the universe
