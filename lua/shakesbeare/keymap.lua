@@ -36,6 +36,96 @@ vim.keymap.set("n", "<C-p>", function()
 	end)
 end, { silent = true, noremap = true, desc = "Execute Terminal Command" })
 
+local function check_build_file()
+	if not vim.uv.fs_stat('.buildfile') then
+		local fidget = require('fidget')
+		fidget.notify("Creating template .buildfile, save and re-run command")
+
+		local template_location = vim.uv.os_homedir() .. "/.dotfiles/nvim_config/lua/.buildfile"
+		local template_bufnr = vim.fn.bufadd(template_location)
+		vim.fn.bufload(template_bufnr)
+		local template = vim.api.nvim_buf_get_lines(template_bufnr, 0, -1, false)
+		
+		local new_bufnr = vim.api.nvim_create_buf(true, false)
+		vim.api.nvim_buf_set_name(new_bufnr, '.buildfile')
+		vim.api.nvim_buf_set_lines(new_bufnr, 0, 0, false, template)
+		vim.api.nvim_win_set_buf(0, new_bufnr)
+		vim.bo[new_bufnr].filetype = "lua"
+		return false
+	end
+	return true
+end
+-- Run build configuration in .buildfile in the workspace root
+-- .buildfile is a lua file which returns a table in this format
+-- return {
+--     build = "echo Hello, Build!",
+--     run = "echo Hello, Run!",
+-- }
+vim.keymap.set("n", "<C-b>", function()
+	local fidget = require('fidget')
+	if not check_build_file() then 
+		return
+	end
+
+	local result = dofile('.buildfile')
+	local cmd = {}
+	for w in result.build:gmatch("%S+") do table.insert(cmd, w) end
+
+	local buffer = {}
+	vim.system(cmd, { text = true, stdout = function(err, data) 
+		if err then
+			fidget.notify(err)
+		elseif data then
+			fidget.notify(data)
+		end
+	end }, function(obj)
+			fidget.notify("Build completed")
+	end)
+end, { silent = true, noremap = true, desc = "Find and execute a build configuration in the .buildfile in the workspace root"})
+
+-- Run run configuration in .buildfile in the workspace root
+-- .buildfile is a lua file which returns a table in this format
+-- return {
+--     build = "echo Hello, Build!",
+--     run = "echo Hello, Run!",
+-- }
+vim.keymap.set("n", "<F5>", function()
+	local fidget = require('fidget')
+	if not check_build_file() then 
+		return
+	end
+
+	local result = dofile('.buildfile')
+	local cmd = {}
+	for w in result.run:gmatch("%S+") do table.insert(cmd, w) end
+
+	local buffer = {}
+	vim.system(cmd, { text = true, stdout = function(err, data) 
+		if err then
+			fidget.notify(err)
+		elseif data then
+			fidget.notify(data)
+		end
+	end }, function(obj)
+	end)
+end, { silent = true, noremap = true, desc = "Find and execute a run configuration .buildfile in the workspace root"})
+
+-- Become a master of the universe
+vim.keymap.set("n", "<C-p>", function()
+	-- pcall to catch KeyboardInterrupt error
+	pcall(function()
+		local command = vim.fn.input("$❯ ")
+		command = command:gsub(".", function(c)
+			return "\\" .. c
+		end)
+		local full_command = ":15split +term\\ " .. command
+		vim.cmd(full_command)
+		-- go to the end of the output
+		local cmd = vim.api.nvim_replace_termcodes("G", true, true, true)
+		vim.api.nvim_feedkeys(cmd, "n", true)
+	end)
+end, { silent = true, noremap = true, desc = "Execute Terminal Command" })
+
 vim.keymap.set("n", "<A-t>", function()
 	vim.cmd(":15split +term")
 	local cmd = vim.api.nvim_replace_termcodes("i", true, true, true)

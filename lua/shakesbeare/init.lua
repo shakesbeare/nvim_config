@@ -1,6 +1,7 @@
 require("shakesbeare.set")
 
 vim.filetype.add({ extension = { p8 = "pico8" } })
+vim.filetype.add({ filename = { ['.buildfile'] = 'lua' }})
 
 -- vim.api.nvim_create_autocmd("TermOpen", {
 -- 	group = vim.api.nvim_create_augroup("term_insert_mode", {}),
