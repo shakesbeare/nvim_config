@@ -1,0 +1,3 @@
+[submodule "lua/plugins/cavernous.nvim"]
+	path = lua/plugins/cavernous.nvim
+	url = git@github.com:shakesbeare/cavernous.nvim
